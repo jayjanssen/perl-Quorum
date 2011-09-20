@@ -1,0 +1,8 @@
+Perl module and command line client for BCP Quorum
+
+This package contains a pure-Perl blocking BCP Quorum REST client module.
+This module abstracts the REST API into a set of simple function calls.
+
+See the full REST documentation here:
+https://github.com/jayjanssen/Quorum
+

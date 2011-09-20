@@ -1,0 +1,18 @@
+Version 1.0.5
+	- Fixed bug in http_call cache.
+	
+Version 1.0.4
+  - Fixed bug in acquire where blocking retry sleep time wasn't getting calculated
+	  correctly resulting in way too many calls to the Quorum service.
+
+Version 1.0.3
+  - Fixed bug in amOwner method
+
+Version 1.0.2
+	- Added 'url' method
+	
+Version 1.0.1
+  - Bug fixes where exceptions were not being handled properly
+
+Version 1.0.0
+  - First production release
