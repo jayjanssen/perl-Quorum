@@ -64,6 +64,15 @@ my $ua = LWP::UserAgent->new;
 
 # Private methods
 
+# Do anything to the http headers necessary before a write request to the Quorum
+sub _add_auth_headers {
+  my( $self, $headers ) = @_;
+  
+  # to add your own code, subclass and override this method.
+  # $headers (HTTP::Headers) can be changed like this:
+  # $headers->header( 'My-Auth-Header' => 'some key');
+}
+
 # Wrapper for http calls
 sub _http_call {
   my $self = shift;
@@ -98,8 +107,11 @@ sub _http_call {
   
   my $headers = HTTP::Headers->new( %$header_hash );  
   
-  # need some generic auth here !!!
-
+  # On write-requests to the Quorum, allow a subclass overridable method to
+  # muck with the headers (i.e., set an authorization header)
+  if( $method == 'POST' or $method == 'PUT' or $method == 'DELETE' ) {
+    $self->_add_auth_headers( $headers );
+  }
   
   # Set our client id only if it was used on object creation
   $headers->header( 'X-Quorum-Client-ID' => $self->{client_id} )
