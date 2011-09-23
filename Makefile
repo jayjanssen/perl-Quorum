@@ -4,7 +4,7 @@
 # governing permissions and limitations under the
 # License.
 
-.PHONY: depend test packages README.pod
+.PHONY: depend test packages commit
 
 test: .test
 
@@ -15,3 +15,7 @@ test: .test
 README.pod: lib/*/*.pm
 	podselect lib/*/*.pm > README.pod
 
+commit: README.pod
+	git add README.pod
+	git commit
+	git push

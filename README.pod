@@ -28,7 +28,9 @@ Quorum::Lease - perl representation of a quorum lease.  This is meant to be a cl
 
 =head1 DESCRIPTION
 
-This module interfaces with a Quorum REST service.  The provided quorum_url and version defines where to access the service over HTTP.  All methods directly call the Quorum service, there is no local caching of the Lease record.
+This is a pure-Perl blocking BCP Quorum REST client module.  This module abstracts the REST API into a set of simple function calls.
+
+The provided quorum_url and version defines where to access the service over HTTP.  All methods directly call the Quorum service, there is no local caching of the Lease record.
 
 =head2 High Availability 
 
