@@ -2,29 +2,29 @@
 
 =head1 NAME
 
-Quorum::Lease - perl representation of a quorum lease 
+Quorum::Lease - perl representation of a quorum lease.  This is meant to be a client to the Quorum service found here: L<http://github.com/jayjanssen/Quorum>.
 
 =head1 SYNOPSIS
 
-use Quorum::Lease;
+ use Quorum::Lease;
 
-my $lease = Quorum::Lease->new( 
+ my $lease = Quorum::Lease->new( 
   name => '/test',
   namespace => '/my/namespace'
-);
+ );
 
-die "Can't acquire lease!" 
-  if $lease->isOwned();
+ die "Can't acquire lease!" 
+   if $lease->isOwned();
 
-if( $lease->acquire( length => 60, retry => 3 )) {
-  # lease acquired
-  unless( $lease->renew( retry => 3 )) {# renew the lease
-    # lease lost
-  } else {
-    $lease->release();
-    # lease released
-  }
-}
+ if( $lease->acquire( length => 60, retry => 3 )) {
+   # lease acquired
+   unless( $lease->renew( retry => 3 )) {# renew the lease
+     # lease lost
+   } else {
+     $lease->release();
+     # lease released
+   }
+ }
 
 =head1 DESCRIPTION
 
@@ -241,7 +241,7 @@ Returns a string representation of the lease from the Quorum server.  Probably o
 
 =head1 REST API
 
-The Quorum REST service documentation can be found here: I<http://github.com/jayjanssen/Quorum>
+The Quorum REST service documentation can be found here: L<http://github.com/jayjanssen/Quorum>
 
 =head1 AUTHORS
 
