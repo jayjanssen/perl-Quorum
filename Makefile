@@ -4,10 +4,14 @@
 # governing permissions and limitations under the
 # License.
 
-.PHONY: depend test packages
+.PHONY: depend test packages README.pod
 
 test: .test
 
 .test: lib/*/* t/* 
 	/usr/local/bin/perl "-MExtUtils::Command::MM" "-e" "test_harness(0, 'blib/lib', 'blib/arch')" t/*.t
 	@touch .test
+
+README.pod: lib/*/*.pm
+	podselect lib/*/*.pm > README.pod
+
