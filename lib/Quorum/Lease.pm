@@ -607,7 +607,7 @@ sub toJSON {
 
 =head1 REST API
 
-The Quorum REST API documentation can be found here: I<http://twiki.corp.yahoo.com/view/BCP/QuorumRestSpec>
+The Quorum REST service documentation can be found here: I<http://github.com/jayjanssen/Quorum>
 
 =head1 AUTHORS
 
