@@ -1,0 +1,249 @@
+=pod
+
+=head1 NAME
+
+Quorum::Lease - perl representation of a quorum lease 
+
+=head1 SYNOPSIS
+
+use Quorum::Lease;
+
+my $lease = Quorum::Lease->new( 
+  name => '/test',
+  namespace => '/my/namespace'
+);
+
+die "Can't acquire lease!" 
+  if $lease->isOwned();
+
+if( $lease->acquire( length => 60, retry => 3 )) {
+  # lease acquired
+  unless( $lease->renew( retry => 3 )) {# renew the lease
+    # lease lost
+  } else {
+    $lease->release();
+    # lease released
+  }
+}
+
+=head1 DESCRIPTION
+
+This module interfaces with a Quorum REST service.  The provided quorum_url and version defines where to access the service over HTTP.  All methods directly call the Quorum service, there is no local caching of the Lease record.
+
+=head2 High Availability 
+
+The quorum_url hostname should be a rotation of REST hosts, preferably one that returns at least two A records.  All HTTP calls made by this module are retried once (by default, configurable) if a 5xx error code is returned.
+
+=head1 METHODS
+
+=head2 Quorum::Lease->new( namespace => '/my/namespace', name => '/lease/id', [option => val, ...])
+
+=over 
+
+Creates a new Quorum::Lease object with the specified options.  
+
+=over
+
+=item 
+
+B<namespace> - The namespace for this lease. *required*
+
+=item 
+
+B<name> - The lease identifier in the namespace. *required*
+
+=item 
+
+B<client_id> - string to uniquely indentify this client to the Quorum Service.  Defaults to the ip the Quorum service sees when we connect to it (could be through a NAT).
+
+=back 
+
+=back
+
+=head2 Common Arguments
+
+=over
+
+All methods (besides 'new') can take some common arguments.
+
+=over
+
+=item 
+
+B<retry> - Number of times to retry on a server-side error (i.e., 500 error code and up).  Final result is what is returned from the function.  Acceptable values from 0 - 10.  Default: 1 (i.e., two attempts are made)
+
+This provides a measure of high availability assuming the DNS lookup on the quorum service returns multiple A records.
+
+=item 
+
+B<retry_interval> - amount of time to wait before retrying again.  Defaults to 1 second.
+
+=back
+
+=back
+
+
+=head2 $lease->url()
+
+=over
+
+Returns the full url for the lease
+
+=back
+
+=head2 $lease->isOwned()
+
+=over
+
+Returns a boolean based on if the lease is acquired or not (by anyone).
+
+=back
+
+=head2 $lease->amOwner()
+
+=over 
+
+Returns a boolean based on if the lease is (or was) owned by us.  Combine with isOwned to know if the lease is current *and* owned by us.
+
+=back
+
+=head2 $lease->expires()
+
+=over
+
+Returns the unixtime correct to the local server time that the lease will expire.  This will work even if the Quorum service is down (last known expiration time), as long as our process had made at least one successful Quorum request in the past. 
+
+=back
+
+=head2 $lease->seconds_left()
+
+=over
+
+Returns the number of seconds left on the current lease.   Undef if it doesn't know, or lease isn't valid.
+
+=back
+
+=head2 $lease->length()
+
+=over
+
+Returns the last length used for the lease (valid or not).
+
+=back
+
+=head2 $lease->seconds_to_renew()
+
+=over 
+
+Amount of time before you should renew.  This only works on an active lease. 
+
+The accepted formula is 1/2 the lease length.  Undef if the lease isn't valid.
+
+=back
+
+=head2 $lease->acquire( [option => val, ...])
+
+=over
+
+Attempts to acquire the lease with the given options.  Returns true if it was successful, false if someone else got there first.  Croaks on other errors, including if you already own the lease (renew instead in that case).
+
+=over
+
+=item 
+
+B<length> - Length of time until the lease expires (in seconds).
+
+=item 
+
+B<client_object> - Object to be stored in the leasing system, will be returned in the http body on a normal GET (with no Accept: headers).  Anyone can request this object.  It is also size-restricted in the Quorum REST system.
+
+=item 
+
+B<block_for> - Tells the method to block for up to the specified number of seconds or until it successfully acquires the lease, whichever comes first.  The method will attempt to acquire the lease I<block_attempts_per_length> times (default: 4) every I<length> until it either is successful or the time is up.  
+
+Each attempt to acquire the lease will be subject to the normal I<retry> parameters above.
+
+A value of B<-1> tells the method to never stop trying until it acquires the lease.  A value of 0, or simply omitting this parameter means the method will not block (except for the normal I<retry> parameters above>).
+
+If this is specified the method will not return except with a true result, but it can croak on a 4xx (client-side) error (except a 409 lease conflict).
+
+=item
+
+B<block_attempts_per_length> - How many tries to make while blocking per B<length>.  Default: 4
+
+=back
+
+=back
+
+=head2 $lease->renew( [option => val, ...])
+
+=over
+
+Attempts to renew the lease with the given options.  Returns true if it was successful, false if we don't own the lease anymore, croaks on other unexpected errors.
+
+=over
+
+=item 
+
+B<client_object> -  same as B<acquire>
+
+=item
+
+B<block_until_expires> - If the client becomes isolated from the Quorum system, the lease will eventually expire because the client cannot renew.  If this is set to true, then this method will repeatedly attempt to renew until the lease expires.  
+
+This only works if the client process was able to I<acquire> or I<renew> successfully, which will cause this object to know when the lease should expire.  Since only this client should be able to renew, that expiration time should hold true if we can't renew. 
+
+This will return either a true because the lease was renewed, false because the lease got taken over somehow, or croak after the last known expires time passes.  
+
+=item
+
+B<block_sleep> - Amount of time (in seconds) to sleep before we try to renew again ( (on top of the I<retry> and I<retry_delay>)).  Defaults to 5 seconds.
+
+=back
+
+=back
+
+=head2 $lease->release( [option => val, ...])
+
+=over
+
+Attempts to release the lease with the given options.  Returns true if it was successful, false if it failed, but we don't own the lease anymore anyway, croaks on other unexpected errors.
+
+=over
+
+=item
+
+B<block_until_expires> - same as for renew.
+
+=item
+
+B<block_sleep> - same as for renew.
+
+=back
+
+=back
+
+=head2 $lease->toString();
+
+=over
+
+Returns a string representation of the lease from the Quorum server.  Probably only useful for debugging purposes.
+
+=back
+
+=head2 $lease->toJSON();
+
+=over
+
+Returns a string representation of the lease from the Quorum server.  Probably only useful for debugging purposes.
+
+=back
+
+=head1 REST API
+
+The Quorum REST API documentation can be found here: I<http://twiki.corp.yahoo.com/view/BCP/QuorumRestSpec>
+
+=head1 AUTHORS
+
+Jay Janssen <jayj@yahoo-inc.com>
+
